@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import PhysicianDashboard from './pages/PhysicianDashboard'
+import CoderDashboard from './pages/CoderDashboard'
+import PatientCoding from './pages/PatientCoding'
 import QueryList from './pages/QueryList'
 import QueryDetail from './pages/QueryDetail'
 import CreateQuery from './pages/CreateQuery'
@@ -19,6 +21,9 @@ function DashboardRouter() {
   // Show different dashboard based on user role
   if (user?.role === 'Physician') {
     return <PhysicianDashboard />
+  }
+  if (user?.role === 'Clinical Coder') {
+    return <CoderDashboard />
   }
   return <Dashboard />
 }
@@ -66,6 +71,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <CreateQuery />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/patient/:patientId"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <PatientCoding />
             </Layout>
           </ProtectedRoute>
         }

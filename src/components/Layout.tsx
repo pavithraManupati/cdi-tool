@@ -62,11 +62,16 @@ export default function Layout({ children }: LayoutProps) {
     handleClose()
   }
 
-  const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { text: 'All Queries', icon: <QueryIcon />, path: '/queries' },
-    { text: 'New Query', icon: <AddIcon />, path: '/queries/new' },
+  // Filter menu items based on user role
+  const allMenuItems = [
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard', roles: ['CDI Specialist', 'Physician', 'Clinical Coder'] },
+    { text: 'All Queries', icon: <QueryIcon />, path: '/queries', roles: ['CDI Specialist', 'Physician'] },
+    { text: 'New Query', icon: <AddIcon />, path: '/queries/new', roles: ['CDI Specialist'] },
   ]
+
+  const menuItems = allMenuItems.filter(item => 
+    item.roles.includes(user?.role || '')
+  )
 
   const drawer = (
     <div>
@@ -80,7 +85,11 @@ export default function Layout({ children }: LayoutProps) {
         <Chip 
           label={user?.role} 
           size="small" 
-          color={user?.role === 'Physician' ? 'secondary' : 'primary'}
+          color={
+            user?.role === 'Physician' ? 'secondary' : 
+            user?.role === 'Clinical Coder' ? 'success' : 
+            'primary'
+          }
           sx={{ width: '100%' }}
         />
       </Box>
@@ -124,7 +133,7 @@ export default function Layout({ children }: LayoutProps) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Query Management System
+            {user?.role === 'Clinical Coder' ? 'Coding Workspace' : 'Query Management System'}
           </Typography>
           
           <IconButton color="inherit" sx={{ mr: 2 }}>

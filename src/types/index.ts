@@ -72,3 +72,43 @@ export interface DashboardStats {
   averageResponseTime: number
   revenueImpact: number
 }
+
+// AI Coding Suggestions Types
+export interface DiagnosisCode {
+  code: string
+  description: string
+  confidence: number
+  category: string
+  isSelected: boolean
+}
+
+export interface CPTCode {
+  code: string
+  description: string
+  confidence: number
+  units: number
+  isSelected: boolean
+}
+
+export interface DRGSuggestion {
+  code: string
+  description: string
+  weight: number
+  score: number
+  confidence: number
+  expectedReimbursement: number
+  isSelected: boolean
+}
+
+export interface CodingSuggestion {
+  patientId: string
+  patientName: string
+  mrn: string
+  admissionDate: string
+  dischargeDate?: string
+  diagnosisCodes: DiagnosisCode[]
+  cptCodes: CPTCode[]
+  drgSuggestions: DRGSuggestion[]
+  aiAnalysis: string
+  generatedAt: string
+}

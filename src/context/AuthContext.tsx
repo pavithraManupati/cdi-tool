@@ -33,6 +33,17 @@ const demoUsers: { email: string; password: string; user: User }[] = [
       email: 'doctor@demo.com',
       department: 'Cardiology'
     }
+  },
+  {
+    email: 'coder@demo.com',
+    password: 'coder123',
+    user: {
+      id: '3',
+      name: 'Jennifer Martinez',
+      role: 'Clinical Coder',
+      email: 'coder@demo.com',
+      department: 'Health Information Management'
+    }
   }
 ]
 

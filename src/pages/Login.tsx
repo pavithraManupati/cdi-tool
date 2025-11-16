@@ -141,6 +141,28 @@ export default function Login() {
                 Login as Physician
               </Button>
             </Box>
+
+            <Box>
+              <Typography variant="subtitle2" gutterBottom fontWeight="bold" sx={{ color: '#9c27b0' }}>
+                Clinical Coder View (AI-Powered)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Email: coder@demo.com | Password: coder123
+              </Typography>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="small"
+                sx={{ 
+                  color: '#9c27b0', 
+                  borderColor: '#9c27b0',
+                  '&:hover': { borderColor: '#7b1fa2', bgcolor: 'rgba(156, 39, 176, 0.04)' }
+                }}
+                onClick={() => handleDemoLogin('coder@demo.com', 'coder123')}
+              >
+                Login as Clinical Coder
+              </Button>
+            </Box>
           </Stack>
 
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 3, textAlign: 'center' }}>
