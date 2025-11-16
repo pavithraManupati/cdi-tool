@@ -4,19 +4,21 @@ export const currentUser: User = {
   id: '1',
   name: 'Dr. Sarah Johnson',
   role: 'CDI Specialist',
-  email: 'sarah.johnson@hospital.com',
+  email: 'cdi@demo.com',
   department: 'Clinical Documentation'
+}
+
+export const physicianUser: User = {
+  id: '2',
+  name: 'Dr. Michael Chen',
+  role: 'Physician',
+  email: 'doctor@demo.com',
+  department: 'Cardiology'
 }
 
 export const mockUsers: User[] = [
   currentUser,
-  {
-    id: '2',
-    name: 'Dr. Michael Chen',
-    role: 'Physician',
-    email: 'michael.chen@hospital.com',
-    department: 'Cardiology'
-  },
+  physicianUser,
   {
     id: '3',
     name: 'Jennifer Martinez',

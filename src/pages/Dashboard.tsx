@@ -21,10 +21,13 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { dashboardStats, mockQueries } from '../data/mockData'
 import { format } from 'date-fns'
+import { useAuth } from '../context/AuthContext'
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042']
 
 export default function Dashboard() {
+  const { user } = useAuth()
+  
   const queryStatusData = [
     { name: 'Open', value: mockQueries.filter(q => q.status === 'Open').length },
     { name: 'Pending', value: mockQueries.filter(q => q.status === 'Pending').length },
@@ -80,9 +83,14 @@ export default function Dashboard() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Dashboard Overview
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Dashboard Overview
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Welcome back, {user?.name}
+        </Typography>
+      </Box>
 
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>

@@ -16,7 +16,8 @@ import {
   Menu,
   MenuItem,
   Divider,
-  Badge
+  Badge,
+  Chip
 } from '@mui/material'
 import {
   Menu as MenuIcon,
@@ -28,7 +29,7 @@ import {
   Settings,
   Logout
 } from '@mui/icons-material'
-import { currentUser } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
 
 const drawerWidth = 240
 
@@ -41,6 +42,7 @@ export default function Layout({ children }: LayoutProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const navigate = useNavigate()
   const location = useLocation()
+  const { user, logout } = useAuth()
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen)
@@ -52,6 +54,12 @@ export default function Layout({ children }: LayoutProps) {
 
   const handleClose = () => {
     setAnchorEl(null)
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+    handleClose()
   }
 
   const menuItems = [
@@ -67,6 +75,15 @@ export default function Layout({ children }: LayoutProps) {
           CDI Tool
         </Typography>
       </Toolbar>
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <Chip 
+          label={user?.role} 
+          size="small" 
+          color={user?.role === 'Physician' ? 'secondary' : 'primary'}
+          sx={{ width: '100%' }}
+        />
+      </Box>
       <Divider />
       <List>
         {menuItems.map((item) => (
@@ -118,14 +135,14 @@ export default function Layout({ children }: LayoutProps) {
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" sx={{ display: { xs: 'none', md: 'block' } }}>
-              {currentUser.name}
+              {user?.name}
             </Typography>
             <IconButton
               onClick={handleMenu}
               color="inherit"
             >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
-                {currentUser.name.split(' ').map(n => n[0]).join('')}
+              <Avatar sx={{ width: 32, height: 32, bgcolor: user?.role === 'Physician' ? 'secondary.main' : 'primary.main' }}>
+                {user?.name.split(' ').map(n => n[0]).join('')}
               </Avatar>
             </IconButton>
           </Box>
@@ -136,9 +153,14 @@ export default function Layout({ children }: LayoutProps) {
             onClose={handleClose}
           >
             <MenuItem disabled>
-              <Typography variant="body2" color="text.secondary">
-                {currentUser.role}
-              </Typography>
+              <Box>
+                <Typography variant="body2" fontWeight="bold">
+                  {user?.name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {user?.role}
+                </Typography>
+              </Box>
             </MenuItem>
             <Divider />
             <MenuItem onClick={handleClose}>
@@ -154,7 +176,7 @@ export default function Layout({ children }: LayoutProps) {
               Settings
             </MenuItem>
             <Divider />
-            <MenuItem onClick={handleClose}>
+            <MenuItem onClick={handleLogout}>
               <ListItemIcon>
                 <Logout fontSize="small" />
               </ListItemIcon>
