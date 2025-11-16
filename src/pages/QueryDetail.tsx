@@ -25,7 +25,11 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-  Tooltip
+  Tooltip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  LinearProgress
 } from '@mui/material'
 import {
   ArrowBack,
@@ -36,12 +40,17 @@ import {
   LocalHospital,
   TrendingUp,
   Refresh,
-  Info
+  Info,
+  AutoAwesome,
+  ExpandMore,
+  Warning,
+  ThumbUp,
+  BarChart
 } from '@mui/icons-material'
 import { format } from 'date-fns'
 import { mockQueries } from '../data/mockData'
-import { QueryStatus } from '../types'
-import { getMockDRGPricing, calculateRevenueImpact, DRGPricingResponse } from '../services/cmsWebPricer'
+import { QueryStatus, CDIComplianceSuggestion, ComplianceSeverity } from '../types'
+import { getMockDRGPricing, DRGPricingResponse } from '../services/cmsWebPricer'
 
 export default function QueryDetail() {
   const { id } = useParams<{ id: string }>()
@@ -60,11 +69,16 @@ export default function QueryDetail() {
   const [potentialDRGPricing, setPotentialDRGPricing] = useState<DRGPricingResponse | null>(null)
   const [pricingLoading, setPricingLoading] = useState(false)
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false)
+  
+  // AI Compliance Suggestions states
+  const [aiSuggestions, setAiSuggestions] = useState<CDIComplianceSuggestion[]>([])
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false)
 
   // Fetch DRG pricing when component mounts
   useEffect(() => {
     if (query?.currentDRG && query?.potentialDRG) {
       fetchDRGPricing()
+      generateAIComplianceSuggestions()
     }
   }, [query?.currentDRG, query?.potentialDRG])
 
@@ -84,6 +98,182 @@ export default function QueryDetail() {
       console.error('Error fetching DRG pricing:', error)
     } finally {
       setPricingLoading(false)
+    }
+  }
+  
+  const generateAIComplianceSuggestions = async () => {
+    if (!query) return
+    
+    setSuggestionsLoading(true)
+    try {
+      // Simulate AI analysis - in production, this would call an AI API
+      const suggestions: CDIComplianceSuggestion[] = []
+      
+      // Analyze based on query type and clinical indicators
+      if (query.queryType === 'Specificity' && query.subject.toLowerCase().includes('heart failure')) {
+        suggestions.push({
+          id: 'AI-HF-001',
+          category: 'documentation',
+          severity: 'high',
+          title: 'Heart Failure Specificity Impact on DRG',
+          description: 'Documenting specific heart failure type (acute vs chronic, systolic vs diastolic) can significantly impact DRG assignment and reimbursement.',
+          recommendation: 'Request physician to document: 1) Acute or Chronic status, 2) Systolic/Diastolic/Combined classification, 3) Reduced or preserved EF',
+          documentationNeeded: [
+            'Acute vs Chronic heart failure status',
+            'Systolic, Diastolic, or Combined type',
+            'Ejection fraction percentage',
+            'NYHA functional classification'
+          ],
+          currentDRG: query.currentDRG,
+          potentialDRG: '293',
+          currentWeight: 0.6824,
+          potentialWeight: 1.0547,
+          weightIncrease: 0.3723,
+          currentScore: 68,
+          potentialScore: 95,
+          revenueIncrease: 2500,
+          regulatoryReference: 'ICD-10-CM Section I.C.9.a - Heart Failure Specificity Guidelines',
+          confidence: 0.94,
+          isAddressed: false
+        })
+      }
+      
+      if (query.clinicalIndicators.some(ci => ci.toLowerCase().includes('creatinine'))) {
+        suggestions.push({
+          id: 'AI-AKI-002',
+          category: 'coding',
+          severity: 'critical',
+          title: 'Acute Kidney Injury - MCC Opportunity',
+          description: 'Elevated creatinine suggests AKI. Documenting AKI stage adds Major Complication/Comorbidity (MCC) which significantly increases DRG weight.',
+          recommendation: 'Query for AKI stage documentation (1, 2, or 3) using KDIGO criteria based on creatinine elevation and urine output.',
+          documentationNeeded: [
+            'Baseline creatinine value',
+            'Peak creatinine during stay',
+            'AKI stage (1, 2, or 3) per KDIGO',
+            'Urine output measurements'
+          ],
+          currentDRG: query.currentDRG || '291',
+          potentialDRG: '682',
+          currentWeight: 0.6824,
+          potentialWeight: 1.4239,
+          weightIncrease: 0.7415,
+          currentScore: 68,
+          potentialScore: 92,
+          revenueIncrease: 4800,
+          regulatoryReference: 'KDIGO Clinical Practice Guidelines for AKI',
+          confidence: 0.91,
+          isAddressed: false
+        })
+      }
+      
+      if (query.clinicalIndicators.some(ci => ci.toLowerCase().includes('fever') || ci.toLowerCase().includes('wbc'))) {
+        suggestions.push({
+          id: 'AI-SEP-003',
+          category: 'clinical-validity',
+          severity: 'critical',
+          title: 'Sepsis Validation - High DRG Impact',
+          description: 'Clinical indicators suggest potential sepsis. Validated sepsis diagnosis creates substantial DRG weight increase and revenue impact.',
+          recommendation: 'Validate sepsis criteria: infection source + SOFA score ≥2 + organ dysfunction. Document sepsis severity (sepsis vs severe sepsis vs septic shock).',
+          documentationNeeded: [
+            'Documented infection source',
+            'SOFA score or SIRS criteria',
+            'Organ dysfunction specifics',
+            'Lactate levels',
+            'Blood culture results',
+            'Sepsis severity classification'
+          ],
+          currentDRG: query.currentDRG || '871',
+          potentialDRG: '870',
+          currentWeight: 0.5826,
+          potentialWeight: 1.5924,
+          weightIncrease: 1.0098,
+          currentScore: 58,
+          potentialScore: 94,
+          revenueIncrease: 6500,
+          regulatoryReference: 'CMS SEP-1 Core Measure & Sepsis-3 Criteria',
+          confidence: 0.88,
+          isAddressed: false
+        })
+      }
+      
+      // Add malnutrition opportunity
+      suggestions.push({
+        id: 'AI-MAL-004',
+        category: 'documentation',
+        severity: 'medium',
+        title: 'Malnutrition Documentation Opportunity',
+        description: 'Complex medical cases often have concurrent malnutrition. Documenting severity adds CC/MCC value to DRG.',
+        recommendation: 'Request nutritional assessment. If malnutrition present, document severity using validated criteria (mild, moderate, severe).',
+        documentationNeeded: [
+          'BMI calculation',
+          'Albumin/Prealbumin levels',
+          'Weight loss percentage and timeline',
+          'Muscle wasting assessment',
+          'Severity classification (mild/moderate/severe)'
+        ],
+        currentDRG: query.currentDRG,
+        potentialDRG: query.currentDRG, // Same DRG but with MCC
+        currentWeight: 0.6824,
+        potentialWeight: 0.9547,
+        weightIncrease: 0.2723,
+        currentScore: 68,
+        potentialScore: 85,
+        revenueIncrease: 2200,
+        regulatoryReference: 'Academy of Nutrition & Dietetics Malnutrition Criteria',
+        confidence: 0.76,
+        isAddressed: false
+      })
+      
+      // Add POA compliance check
+      suggestions.push({
+        id: 'AI-POA-005',
+        category: 'regulatory',
+        severity: 'high',
+        title: 'Present on Admission (POA) Compliance',
+        description: 'POA indicators must be accurate to avoid HAC penalties and maintain compliance with CMS requirements.',
+        recommendation: 'Review admission documentation to confirm POA status for all diagnoses. Hospital-acquired conditions can result in payment penalties.',
+        documentationNeeded: [
+          'Admission assessment documentation',
+          'Timing of condition onset',
+          'POA indicator (Y/N/U/W) for each diagnosis'
+        ],
+        potentialDRG: query.currentDRG,
+        revenueIncrease: 0,
+        regulatoryReference: 'Deficit Reduction Act 2005 Section 5001(c) - POA Reporting',
+        confidence: 0.95,
+        isAddressed: false
+      })
+      
+      setAiSuggestions(suggestions)
+    } catch (error) {
+      console.error('Error generating AI suggestions:', error)
+    } finally {
+      setSuggestionsLoading(false)
+    }
+  }
+  
+  const handleApplySuggestion = (suggestionId: string) => {
+    setAiSuggestions(prev =>
+      prev.map(s => s.id === suggestionId ? { ...s, isAddressed: true } : s)
+    )
+  }
+  
+  const getSeverityColor = (severity: ComplianceSeverity) => {
+    switch (severity) {
+      case 'critical': return 'error'
+      case 'high': return 'warning'
+      case 'medium': return 'info'
+      case 'low': return 'success'
+      case 'info': return 'default'
+      default: return 'default'
+    }
+  }
+  
+  const getSeverityIcon = (severity: ComplianceSeverity) => {
+    switch (severity) {
+      case 'critical': return <Warning color="error" />
+      case 'high': return <Warning color="warning" />
+      default: return <Info color="info" />
     }
   }
 
@@ -419,6 +609,210 @@ export default function QueryDetail() {
                     )}
                   </Grid>
                 </Grid>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* AI Compliance Suggestions */}
+          <Card sx={{ mb: 3, border: 2, borderColor: 'primary.main' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="h6">
+                  <AutoAwesome sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
+                  AI Compliance Insights
+                </Typography>
+                <Tooltip title="Refresh AI Analysis">
+                  <IconButton size="small" onClick={generateAIComplianceSuggestions} disabled={suggestionsLoading}>
+                    <Refresh fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              
+              {suggestionsLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                  <CircularProgress size={40} />
+                </Box>
+              ) : aiSuggestions.length === 0 ? (
+                <Alert severity="info" icon={<AutoAwesome />}>
+                  <Typography variant="body2">
+                    No AI suggestions available. Click refresh to generate insights.
+                  </Typography>
+                </Alert>
+              ) : (
+                <Box>
+                  <Alert severity="info" sx={{ mb: 2 }} icon={<AutoAwesome />}>
+                    <Typography variant="caption">
+                      AI analyzed this case and found <strong>{aiSuggestions.length} opportunities</strong> to improve documentation and DRG accuracy.
+                    </Typography>
+                  </Alert>
+                  
+                  {aiSuggestions.map((suggestion, index) => (
+                    <Accordion 
+                      key={suggestion.id}
+                      sx={{ 
+                        mb: 1,
+                        border: 1,
+                        borderColor: `${getSeverityColor(suggestion.severity)}.main`,
+                        '&:before': { display: 'none' }
+                      }}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMore />}>
+                        <Box sx={{ width: '100%' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                            {getSeverityIcon(suggestion.severity)}
+                            <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+                              {suggestion.title}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            <Chip 
+                              label={suggestion.severity.toUpperCase()} 
+                              size="small" 
+                              color={getSeverityColor(suggestion.severity)}
+                            />
+                            {suggestion.revenueIncrease && suggestion.revenueIncrease > 0 && (
+                              <Chip 
+                                label={`+$${suggestion.revenueIncrease.toLocaleString()}`} 
+                                size="small" 
+                                color="success"
+                                icon={<TrendingUp />}
+                              />
+                            )}
+                          </Box>
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Typography variant="body2" paragraph>
+                          {suggestion.description}
+                        </Typography>
+                        
+                        <Paper sx={{ p: 2, bgcolor: '#f5f5f5', mb: 2 }}>
+                          <Typography variant="subtitle2" gutterBottom color="primary">
+                            <AutoAwesome fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                            AI Recommendation:
+                          </Typography>
+                          <Typography variant="body2">
+                            {suggestion.recommendation}
+                          </Typography>
+                        </Paper>
+                        
+                        {suggestion.documentationNeeded && suggestion.documentationNeeded.length > 0 && (
+                          <Box sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2" gutterBottom>
+                              Documentation Needed:
+                            </Typography>
+                            <List dense>
+                              {suggestion.documentationNeeded.map((doc, idx) => (
+                                <ListItem key={idx} sx={{ py: 0.5, pl: 0 }}>
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      width: 6,
+                                      height: 6,
+                                      borderRadius: '50%',
+                                      bgcolor: 'primary.main',
+                                      mr: 1.5,
+                                      flexShrink: 0
+                                    }}
+                                  />
+                                  <Typography variant="caption">{doc}</Typography>
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+                        
+                        {/* DRG Impact Section */}
+                        {suggestion.weightIncrease && (
+                          <Paper sx={{ p: 2, bgcolor: '#e8f5e9', mb: 2 }}>
+                            <Typography variant="subtitle2" gutterBottom color="success.main">
+                              <BarChart fontSize="small" sx={{ verticalAlign: 'middle', mr: 0.5 }} />
+                              DRG Weight & Score Impact:
+                            </Typography>
+                            <Grid container spacing={2}>
+                              <Grid item xs={6}>
+                                <Typography variant="caption" color="text.secondary">Current Weight</Typography>
+                                <Typography variant="h6">{suggestion.currentWeight?.toFixed(4)}</Typography>
+                                <Typography variant="caption" color="text.secondary">Score: {suggestion.currentScore}</Typography>
+                              </Grid>
+                              <Grid item xs={6}>
+                                <Typography variant="caption" color="success.main">Potential Weight</Typography>
+                                <Typography variant="h6" color="success.main">
+                                  {suggestion.potentialWeight?.toFixed(4)}
+                                </Typography>
+                                <Typography variant="caption" color="success.main">Score: {suggestion.potentialScore}</Typography>
+                              </Grid>
+                              <Grid item xs={12}>
+                                <Divider sx={{ my: 1 }} />
+                                <Typography variant="caption" color="text.secondary">Weight Increase</Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="h5" color="success.main">
+                                    +{suggestion.weightIncrease?.toFixed(4)}
+                                  </Typography>
+                                  <Chip 
+                                    label={`${((suggestion.weightIncrease! / suggestion.currentWeight!) * 100).toFixed(1)}%`} 
+                                    size="small" 
+                                    color="success"
+                                  />
+                                </Box>
+                                <Typography variant="caption" color="text.secondary">
+                                  DRG: {suggestion.currentDRG} → {suggestion.potentialDRG}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                          </Paper>
+                        )}
+                        
+                        {suggestion.regulatoryReference && (
+                          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                            📋 Reference: {suggestion.regulatoryReference}
+                          </Typography>
+                        )}
+                        
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              AI Confidence:
+                            </Typography>
+                            <LinearProgress
+                              variant="determinate"
+                              value={suggestion.confidence * 100}
+                              sx={{ width: 60, height: 6, borderRadius: 3 }}
+                              color={suggestion.confidence >= 0.9 ? 'success' : suggestion.confidence >= 0.75 ? 'primary' : 'warning'}
+                            />
+                            <Typography variant="caption" fontWeight="bold">
+                              {(suggestion.confidence * 100).toFixed(0)}%
+                            </Typography>
+                          </Box>
+                          <Button
+                            size="small"
+                            variant={suggestion.isAddressed ? 'outlined' : 'contained'}
+                            color={suggestion.isAddressed ? 'success' : 'primary'}
+                            startIcon={suggestion.isAddressed ? <CheckCircle /> : <ThumbUp />}
+                            onClick={() => handleApplySuggestion(suggestion.id)}
+                          >
+                            {suggestion.isAddressed ? 'Applied' : 'Apply'}
+                          </Button>
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
+                  
+                  {aiSuggestions.filter(s => s.revenueIncrease && s.revenueIncrease > 0).length > 0 && (
+                    <Alert severity="success" sx={{ mt: 2 }}>
+                      <Typography variant="subtitle2" fontWeight="bold">
+                        Total Revenue Opportunity: ${aiSuggestions
+                          .filter(s => s.revenueIncrease && s.revenueIncrease > 0)
+                          .reduce((sum, s) => sum + (s.revenueIncrease || 0), 0)
+                          .toLocaleString()}
+                      </Typography>
+                      <Typography variant="caption">
+                        By addressing these AI-identified opportunities
+                      </Typography>
+                    </Alert>
+                  )}
+                </Box>
               )}
             </CardContent>
           </Card>

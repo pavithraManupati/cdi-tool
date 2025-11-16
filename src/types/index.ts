@@ -112,3 +112,27 @@ export interface CodingSuggestion {
   aiAnalysis: string
   generatedAt: string
 }
+
+export type ComplianceSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info'
+export type ComplianceCategory = 'documentation' | 'coding' | 'clinical-validity' | 'regulatory' | 'billing'
+
+export interface CDIComplianceSuggestion {
+  id: string
+  category: ComplianceCategory
+  severity: ComplianceSeverity
+  title: string
+  description: string
+  recommendation: string
+  documentationNeeded: string[]
+  currentDRG?: string
+  potentialDRG?: string
+  currentWeight?: number
+  potentialWeight?: number
+  weightIncrease?: number
+  currentScore?: number
+  potentialScore?: number
+  revenueIncrease?: number
+  regulatoryReference?: string
+  confidence: number
+  isAddressed: boolean
+}
